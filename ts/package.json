@@ -21,5 +21,8 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "webuix": "^0.0.18"
   }
 }
