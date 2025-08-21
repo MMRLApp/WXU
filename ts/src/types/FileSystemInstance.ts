@@ -57,7 +57,7 @@ export interface FileSystemInstance {
    */
   isSymlinkSync(): boolean;
 
-    /**
+  /**
    * Checks if this instance points to a block device.
    *
    * @returns {boolean} `true` if it is a block device, `false` otherwise.

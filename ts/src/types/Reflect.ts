@@ -14,6 +14,5 @@ export interface Reflect {
   getField(objectId: string, fieldName: string): string | null;
   setField(objectId: string, fieldName: string, value: string): boolean;
   createProxy(interfaceName: string, methodsMapJson: string): string | null;
-
   releaseObject(objectId: string): boolean;
 }
