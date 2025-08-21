@@ -1,5 +1,5 @@
 import { WXEventHandler } from "webuix";
-import type { Pty, PtyInstance } from "../types";
+import type { Global, Pty, PtyInstance } from "../types";
 
 export type EnvironmentVariables = {
   [key: string]: string | null;
@@ -23,9 +23,9 @@ export class PseudoTerminal {
       this._eventHandler = new WXEventHandler();
     }
 
-    let impl: Pty | null = null;
+    let impl: Pty | undefined;
     try {
-      impl = global.require("pty") as Pty | null;
+      impl = window.global.require("wx:pty");
     } catch (error) {
       console.error("Failed to load pty:", error);
       return;

@@ -2,39 +2,39 @@ import type { Reflect } from "../types/Reflect";
 
 /**
  * Represents a bridge to interact with Java objects from JavaScript/TypeScript.
- * 
+ *
  * The `JavaObject` class provides static and instance methods to create, manipulate,
  * and release Java objects via a reflection interface, typically exposed by a
  * global context (e.g., `wx:reflect` module). It supports calling methods, accessing
  * fields, and creating Java proxies with JavaScript handlers.
- * 
+ *
  * ## Usage
- * 
+ *
  * - Instantiate with a Java class name and constructor arguments to create a new Java object.
  * - Use `call` to invoke Java methods, `get` and `set` to access fields.
  * - Use static methods for advanced operations or to create proxies.
- * 
+ *
  * ## Static Members
- * 
+ *
  * - `reflect`: The reflection interface for Java interop.
  * - `proxyHandlers`: Internal map for proxy handler functions.
  * - `nextProxyId`: Counter for generating unique proxy handler IDs.
- * 
+ *
  * ## Instance Members
- * 
+ *
  * - `classId`: The Java class identifier.
  * - `objId`: The Java object identifier.
- * 
+ *
  * ## Methods
- * 
+ *
  * - `constructor(className, args)`: Creates a new Java object.
  * - `call(method, args)`: Calls a Java method.
  * - `get(field)`: Gets a Java field value.
  * - `set(field, value)`: Sets a Java field value.
  * - `release()`: Releases the Java object.
- * 
+ *
  * ## Static Methods
- * 
+ *
  * - `getClass(name)`: Gets a Java class ID.
  * - `newInstance(classId, args)`: Creates a new Java object instance.
  * - `callMethod(objId, method, args)`: Calls a method on a Java object.
@@ -43,12 +43,12 @@ import type { Reflect } from "../types/Reflect";
  * - `release(objId)`: Releases a Java object.
  * - `fromObjId(objId)`: Creates a `JavaObject` from an existing object ID.
  * - `createProxy(interfaceName, handler)`: Creates a Java proxy object with a JavaScript handler.
- * 
+ *
  * @throws {Error} If the required global context or reflection module is not available.
  * @throws {TypeError} For invalid arguments in methods.
  */
 export class JavaObject {
-  public static reflect: Reflect;
+  public static reflect: Reflect | undefined;
   public static proxyHandlers: Map<any, any>;
   public static nextProxyId: number;
   public classId: any;
@@ -61,7 +61,7 @@ export class JavaObject {
       );
     }
 
-    this.reflect = window.global.require("wx:reflect") as Reflect;
+    this.reflect = window.global.require("wx:reflect");
     this.proxyHandlers = new Map();
     this.nextProxyId = 0;
   }
@@ -83,7 +83,7 @@ export class JavaObject {
   public call(
     method: string,
     args: Array<string | boolean | number> = []
-  ): string | null {
+  ): string | null | undefined {
     if (typeof method !== "string" || method.length === 0) {
       throw new TypeError("Method name must be a non-empty string.");
     }
@@ -91,7 +91,7 @@ export class JavaObject {
     return JavaObject.callMethod(this.objId, method, args);
   }
 
-  public get(field: string): string | null {
+  public get(field: string): string | null | undefined {
     if (typeof field !== "string" || field.length === 0) {
       throw new TypeError("Field name must be a non-empty string.");
     }
@@ -115,38 +115,41 @@ export class JavaObject {
     JavaObject.release(this.objId);
   }
 
-  public static getClass(name: string): string | null {
-    return this.reflect.getClass(name);
+  public static getClass(name: string): string | null | undefined {
+    return this.reflect?.getClass(name);
   }
 
   public static newInstance(
     classId: string,
     args: Array<string | boolean | number> | null
-  ): string | null {
+  ): string | null | undefined {
     const jsonArgs = args == null ? "null" : JSON.stringify(args);
-    return this.reflect.newInstance(classId, jsonArgs);
+    return this.reflect?.newInstance(classId, jsonArgs);
   }
 
   public static callMethod(
     objId: string,
     method: string,
     args: Array<string | boolean | number> | null
-  ): string | null {
+  ): string | null | undefined {
     const jsonArgs = args == null ? "[]" : JSON.stringify(args);
-    return this.reflect.callMethod(objId, method, jsonArgs);
+    return this.reflect?.callMethod(objId, method, jsonArgs);
   }
 
   public static callStaticMethod(
     objId: string,
     method: string,
     args: Array<string | boolean | number> | null
-  ): string | null {
+  ): string | null | undefined {
     const jsonArgs = args == null ? "[]" : JSON.stringify(args);
-    return this.reflect.callStaticMethod(objId, method, jsonArgs);
+    return this.reflect?.callStaticMethod(objId, method, jsonArgs);
   }
 
-  public static getField(objId: string, field: string): string | null {
-    return this.reflect.getField(objId, field);
+  public static getField(
+    objId: string,
+    field: string
+  ): string | null | undefined {
+    return this.reflect?.getField(objId, field);
   }
 
   public static setField(
@@ -154,14 +157,14 @@ export class JavaObject {
     field: string,
     value: string | boolean | number | null
   ): void {
-    this.reflect.setField(objId, field, String(value));
+    this.reflect?.setField(objId, field, String(value));
   }
 
   public static release(objId: string): void {
-    this.reflect.releaseObject(objId);
+    this.reflect?.releaseObject(objId);
   }
 
-  public static fromObjId(objId: string | null): JavaObject {
+  public static fromObjId(objId: string | null | undefined): JavaObject {
     const obj = new JavaObject(null);
     obj.objId = objId;
     return obj;
@@ -196,10 +199,11 @@ export class JavaObject {
       }
     }
 
-    const proxyId = this.reflect.createProxy(
+    const proxyId = this.reflect?.createProxy(
       interfaceName,
       JSON.stringify(methodsMap)
     );
+
     const proxy = JavaObject.fromObjId(proxyId);
 
     (proxy as any).releaseProxy = () => {

@@ -59,7 +59,7 @@ export class Context {
   /**
    * Gets the application's external cache directory (if available)
    */
-  public get externalCacheDir(): string | null {
+  public get externalCacheDir(): string | null | undefined {
     return this._context.call("getExternalCacheDir", []);
   }
 
