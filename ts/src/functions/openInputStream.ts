@@ -1,9 +1,9 @@
 import { FsPermissionError } from "../classes/FsPermissionError";
 import { FsStreamError } from "../classes/FsStreamError";
-import type { ReadableStreamInit } from "../interfaces/ReadableStreamInit";
+import type { FsStreamInit } from "../interfaces/FsStreamInit";
 
 // Default configuration for readable streams
-export const readableStreamInit: ReadableStreamInit = {
+export const fsStreamInit: FsStreamInit = {
   headers: {
     "Content-Type": "application/octet-stream",
   },
@@ -15,7 +15,7 @@ export const readableStreamInit: ReadableStreamInit = {
  * @param init - Optional configuration for the readable stream
  * @returns Promise that resolves to a Response object containing the file data
  */
-export async function openInputStream(path: string, init: ReadableStreamInit = {}): Promise<Response> {
+export async function openInputStream(path: string, init: FsStreamInit = {}): Promise<Response> {
   // Validate input parameters
   if (typeof path !== "string") {
     throw new TypeError("'path' must be a string");
@@ -30,8 +30,8 @@ export async function openInputStream(path: string, init: ReadableStreamInit = {
     throw new FsPermissionError("INPUT");
   }
 
-  const mergedInit: ReadableStreamInit = {
-    ...readableStreamInit,
+  const mergedInit: FsStreamInit = {
+    ...fsStreamInit,
     ...init,
   };
 
