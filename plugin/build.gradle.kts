@@ -12,26 +12,6 @@ android {
     defaultConfig {
         minSdk = 26
         multiDexEnabled = false
-
-        ndk {
-            abiFilters += arrayOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
-        }
-
-        externalNativeBuild {
-            cmake {
-                arguments += listOf(
-                    "-DANDROID_STL=c++_static",
-                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
-                )
-            }
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/jni/CMakeLists.txt")
-            version = "3.22.1"
-        }
     }
 
     buildTypes {
@@ -85,6 +65,8 @@ dependencies {
     compileOnly(libs.mmrl.webui)
     compileOnly(libs.mmrl.platform)
     compileOnly(libs.mmrl.jna)
+
+    compileOnly(libs.webkit)
 
     compileOnly(libs.square.retrofit.moshi)
     compileOnly(libs.square.retrofit.kotlinxSerialization)

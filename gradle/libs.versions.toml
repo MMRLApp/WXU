@@ -8,6 +8,7 @@ squareRetrofit = "2.11.0"
 squareMoshi = "1.15.1"
 kotlinVersion = "1.9.0"
 kotlin = "2.0.0"
+webkit = "1.14.0"
 
 [libraries]
 ksp-gradle = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
@@ -19,6 +20,7 @@ square-retrofit-moshi = { group = "com.squareup.retrofit2", name = "converter-mo
 square-retrofit-kotlinxSerialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "squareRetrofit" }
 square-moshi = { group = "com.squareup.moshi", name = "moshi", version.ref = "squareMoshi" }
 square-moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "squareMoshi" }
+webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

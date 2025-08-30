@@ -6,3 +6,5 @@ export * from "./JavaObject";
 export * from "./SharedPreferences";
 export * from "./Context";
 export * from "./PseudoTerminal";
+export * from "./FsStreamError";
+export * from "./FsPermissionError";

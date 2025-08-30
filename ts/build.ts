@@ -7,13 +7,15 @@ import { join, relative } from "path";
 
 const baseDir = "./src";
 
-generateIndexes(baseDir, [{ dir: "types", isTypes: true }, { dir: "classes" }]);
+generateIndexes(baseDir, [
+  { dir: "types", isTypes: true },
+  { dir: "classes" },
+  { dir: "functions" },
+  { dir: "interfaces", isTypes: true },
+]);
 
 // Get Git commit count
-const count = parseInt(
-  execSync("git rev-list --count HEAD").toString().trim(),
-  10
-);
+const count = parseInt(execSync("git rev-list --count HEAD").toString().trim(), 10);
 
 // Compute MAJOR.MINOR.PATCH
 const MAJOR = Math.floor(count / 10000);
@@ -85,9 +87,7 @@ function generateIndexes(baseDir: string, configs: IndexConfig[]) {
       .map((file: string) => {
         if (file.endsWith("index.ts")) return;
         if (file.endsWith(".ts")) {
-          let relPath =
-            "./" +
-            relative(absDir, file).replace(/\\/g, "/").replace(/\.ts$/, "");
+          let relPath = "./" + relative(absDir, file).replace(/\\/g, "/").replace(/\.ts$/, "");
           return `export ${isTypes ? "type " : ""}* from "${relPath}";`;
         }
       })
@@ -104,25 +104,15 @@ ${imports}`
     );
 
     // Add export from this index to baseDir index
-    const relPathToBase =
-      "./" +
-      relative(baseDir, join(absDir, indexFileName))
-        .replace(/\\/g, "/")
-        .replace(/\.ts$/, "");
-    baseExports.push(
-      `export ${isTypes ? "type " : ""}* from "${relPathToBase}";`
-    );
+    const relPathToBase = "./" + relative(baseDir, join(absDir, indexFileName)).replace(/\\/g, "/").replace(/\.ts$/, "");
+    baseExports.push(`export ${isTypes ? "type " : ""}* from "${relPathToBase}";`);
 
     if (subDirs.length > 0) {
       let exports: string[] = [];
       subDirs.forEach((subDir) => {
         const indexPath = join(baseDir, subDir, "index.ts");
         if (existsSync(indexPath)) {
-          const relPath =
-            "./" +
-            relative(absDir, indexPath)
-              .replace(/\\/g, "/")
-              .replace(/\.ts$/, "");
+          const relPath = "./" + relative(absDir, indexPath).replace(/\\/g, "/").replace(/\.ts$/, "");
           exports.push(`export ${isTypes ? "type " : ""}* from "${relPath}";`);
         }
       });

@@ -1,13 +1,17 @@
 package dev.mmrl.util
 
+import android.R.id.input
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.Base64
+import androidx.core.graphics.createBitmap
 import com.dergoogler.mmrl.webui.moshi
 import java.io.ByteArrayOutputStream
-import androidx.core.graphics.createBitmap
+import java.io.IOException
+import java.io.InputStream
+
 
 fun <T> List<T>?.toJsonString(): String {
     if (this == null) return "[]"

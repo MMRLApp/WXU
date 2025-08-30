@@ -5,6 +5,7 @@ import type { Pty } from "./Pty";
 import type { Reflect } from "./Reflect";
 import type { FileSystem } from "./FileSystem";
 import type { WXEventHandler } from "webuix";
+import type { FsStreamInterface } from "./FsStreamInterface";
 
 export interface GlobalModules {
   fs: FileSystem;
@@ -16,9 +17,7 @@ export interface GlobalModules {
 }
 
 export interface Global {
-  require<K extends keyof GlobalModules>(
-    module: K | `wx:${K}`
-  ): GlobalModules[K] | undefined;
+  require<K extends keyof GlobalModules>(module: K | `wx:${K}`): GlobalModules[K] | undefined;
 }
 
 export {};
@@ -34,6 +33,8 @@ declare global {
     module: Module | null;
     pty: Pty | null;
     _wxEventHandler?: WXEventHandler | undefined | null;
+    FsInputStream?: FsStreamInterface;
+    FsOutputStream?: FsStreamInterface;
   }
 }
 

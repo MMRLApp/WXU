@@ -4,3 +4,5 @@
 
 export type * from "./types/index";
 export * from "./classes/index";
+export * from "./functions/index";
+export type * from "./interfaces/index";

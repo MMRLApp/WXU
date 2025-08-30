@@ -2,12 +2,19 @@
 
 package dev.mmrl
 
+import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.core.content.pm.PackageInfoCompat
+import androidx.webkit.WebMessageCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.dergoogler.mmrl.platform.PlatformManager
+import com.dergoogler.mmrl.platform.file.SuFile
 import com.dergoogler.mmrl.webui.interfaces.WXInterface
 import com.dergoogler.mmrl.webui.interfaces.WXOptions
 import dev.mmrl.internal.WXUInterface
+import dev.mmrl.internal.initFsInputStream
+import dev.mmrl.internal.initFsOutputStream
 import dev.mmrl.module.Dialog
 import dev.mmrl.module.FileSystem
 import dev.mmrl.module.Module
@@ -23,6 +30,11 @@ class Global(wxOptions: WXOptions) : WXInterface(wxOptions) {
     private val um get() = PlatformManager.userManager
 
     override var name = "global"
+
+    init {
+        initFsInputStream()
+        initFsOutputStream()
+    }
 
     private val modules: List<Class<out WXUInterface>> = listOf(
         FileSystem::class.java,

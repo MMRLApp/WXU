@@ -11,14 +11,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.window.DialogProperties
-import com.dergoogler.mmrl.webui.interfaces.WXInterface
 import com.dergoogler.mmrl.webui.interfaces.WXOptions
 import dev.mmrl.internal.WXUInterface
 
 class Dialog(wxOptions: WXOptions) : WXUInterface(wxOptions) {
     override var name = "dialog"
-
-
 
     @JavascriptInterface
     fun show() {

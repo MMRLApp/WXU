@@ -10,3 +10,4 @@ export type * from "./PackageManager";
 export type * from "./Process";
 export type * from "./Pty";
 export type * from "./Reflect";
+export type * from "./FsStreamInterface";
