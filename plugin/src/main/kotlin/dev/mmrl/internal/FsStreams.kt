@@ -1,10 +1,12 @@
 package dev.mmrl.internal
 
+import android.R.id.message
 import androidx.webkit.WebMessageCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.dergoogler.mmrl.platform.file.SuFile
 import com.dergoogler.mmrl.webui.interfaces.WXInterface
+import dev.mmrl.util.createWebMessageListener
 
 
 private val WXInterface.isFsInputStreamAllowed: Boolean get() = "wxu.permission.FS_INPUT_STREAM" in config.permissions
@@ -15,23 +17,19 @@ fun WXInterface.initFsInputStream() {
         return
     }
 
-    WebViewCompat.addWebMessageListener(
-        webView,
-        "FsInputStream",
-        setOf("*")
-    ) { view, message, sourceOrigin, isMainFrame, reply ->
+    createWebMessageListener("FsInputStream") fis@{
         val data: String? = message.data
 
         if (data == null) {
             reply.postMessage("Failed! Data was null.")
-            return@addWebMessageListener
+            return@fis
         }
 
         val file = SuFile(message.data)
 
         if (!file.exists()) {
             reply.postMessage("Failed! File does not exist.")
-            return@addWebMessageListener
+            return@fis
         }
 
         when (message.type) {
@@ -60,19 +58,14 @@ fun WXInterface.initFsOutputStream() {
 
     var currentPath: String? = null
 
-    WebViewCompat.addWebMessageListener(
-        webView,
-        "FsOutputStream",
-        setOf("*")
-    ) { view, message, sourceOrigin, isMainFrame, reply ->
-
+    createWebMessageListener("FsOutputStream") ops@{
         when (message.type) {
             WebMessageCompat.TYPE_STRING -> {
                 // Initialize the file path
                 currentPath = message.data
                 if (currentPath == null) {
                     reply.postMessage("Failed! Path was null.")
-                    return@addWebMessageListener
+                    return@ops
                 }
 
                 val file = SuFile(currentPath)
@@ -81,7 +74,7 @@ fun WXInterface.initFsOutputStream() {
                         file.createNewFile()
                     } catch (e: Exception) {
                         reply.postMessage("Failed to create file: ${e.message}")
-                        return@addWebMessageListener
+                        return@ops
                     }
                 }
 
@@ -91,7 +84,7 @@ fun WXInterface.initFsOutputStream() {
             WebMessageCompat.TYPE_ARRAY_BUFFER -> {
                 if (currentPath == null) {
                     reply.postMessage("Failed! Path not set before sending chunk.")
-                    return@addWebMessageListener
+                    return@ops
                 }
 
                 try {
