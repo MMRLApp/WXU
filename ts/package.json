@@ -1,6 +1,6 @@
 {
   "name": "wxu",
-  "version": "0.0.89",
+  "version": "0.0.92",
   "type": "module",
   "description": "WXU TypeScript Package",
   "source": "src/index.ts",
