@@ -8,3 +8,4 @@ export * from "./Context";
 export * from "./PseudoTerminal";
 export * from "./FsStreamError";
 export * from "./FsPermissionError";
+export * from "./android/app/ActivityThread";

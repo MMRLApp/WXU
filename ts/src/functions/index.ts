@@ -10,4 +10,3 @@ export * from "./readJsonFile";
 export * from "./writeTextFile";
 export * from "./writeBinaryFile";
 export * from "./writeJsonFile";
-export * from "./JavaObjectProxy";

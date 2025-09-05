@@ -1,21 +1,42 @@
 import { JavaObject } from "./JavaObject";
+import { ActivityThread } from "./android/app/ActivityThread";
+
+export interface ContextWrapper {
+  getApplicationContext(): any;
+}
+
+export interface ContextImpl extends ContextWrapper {
+  getPackageName(): string;
+  getDataDir(): any;
+  getCacheDir(): any;
+  getExternalCacheDir(): any;
+  getFilesDir(): any;
+  getSystemService(name: string): any;
+  getResources(): any;
+  getPackageManager(): any;
+  getContentResolver(): any;
+  getApplicationInfo(): any;
+  getAssets(): any;
+  getSharedPreferences(name: string, mode: number): any;
+}
 
 /**
  * Provides access to Android application context and common context-related operations.
  * Wraps the underlying JavaObject interactions for easier use in JavaScript/TypeScript.
  */
-export class Context {
+export class Context implements ContextImpl {
   private static _instance: Context;
-  private _context: JavaObject;
+  private _context: ContextImpl;
 
   private constructor() {
-    // Initialize the base context using ActivityThread
-    const ActivityThread = new JavaObject("android.app.ActivityThread");
-    const thread = ActivityThread.call("currentActivityThread");
-    const context = JavaObject.callMethod(thread!!, "getApplication", []);
-    this._context = JavaObject.fromObjId(
-      JavaObject.callMethod(context!!, "getApplicationContext", [])
-    );
+    const aThread = new ActivityThread();
+    // ContextWrapper is basiclly `Context`
+    const application = aThread.currentActivityThread().getApplication();
+    this._context = application.getApplicationContext() as ContextImpl;
+  }
+
+  public getApplicationContext() {
+    return this;
   }
 
   /**
@@ -28,101 +49,92 @@ export class Context {
     return Context._instance;
   }
 
-  /**
-   * Gets the underlying JavaObject representing the Android context
-   */
-  public get native(): JavaObject {
-    return this._context;
+  public getSharedPreferences(name: string, mode: number) {
+    return this._context.getSharedPreferences(name, mode);
   }
 
   /**
    * Gets the application's package name
    */
-  public get packageName(): string {
-    return this._context.call("getPackageName", []) as string;
+  public getPackageName(): string {
+    return this._context.getPackageName();
   }
 
   /**
    * Gets the application's data directory
    */
-  public get dataDir(): string {
-    return this._context.call("getDataDir", []) as string;
+  public getDataDir(): string {
+    return this._context.getDataDir();
   }
 
   /**
    * Gets the application's cache directory
    */
-  public get cacheDir(): string {
-    return this._context.call("getCacheDir", []) as string;
+  public getCacheDir(): string {
+    return this._context.getCacheDir();
   }
 
   /**
    * Gets the application's external cache directory (if available)
    */
-  public get externalCacheDir(): string | null | undefined {
-    return this._context.call("getExternalCacheDir", []);
+  public getExternalCacheDir(): string | null | undefined {
+    return this._context.getExternalCacheDir();
   }
 
   /**
    * Gets the application's files directory
    */
-  public get filesDir(): string {
-    return this._context.call("getFilesDir", []) as string;
+  public getFilesDir(): string {
+    return this._context.getFilesDir();
   }
 
   /**
    * Gets the system service with the given name
    * @param serviceName The name of the system service (e.g., "window", "power")
    */
-  public getSystemService(serviceName: string): JavaObject | null {
-    const serviceId = this._context.call("getSystemService", [serviceName]);
-    return serviceId ? JavaObject.fromObjId(serviceId) : null;
+  public getSystemService(serviceName: string) {
+    return this._context.getSystemService(serviceName);
   }
 
   /**
    * Gets the resources object for the application
    */
-  public get resources(): JavaObject | null {
-    const resourcesId = this._context.call("getResources", []);
-    return resourcesId ? JavaObject.fromObjId(resourcesId) : null;
+  public getResources() {
+    return this._context.getResources();
   }
 
   /**
    * Gets the package manager
    */
-  public get packageManager(): JavaObject | null {
-    const pmId = this._context.call("getPackageManager", []);
-    return pmId ? JavaObject.fromObjId(pmId) : null;
+  public getPackageManager() {
+    return this._context.getPackageManager();
   }
 
   /**
    * Gets the content resolver
    */
-  public get contentResolver(): JavaObject | null {
-    const crId = this._context.call("getContentResolver", []);
-    return crId ? JavaObject.fromObjId(crId) : null;
+  public getContentResolver() {
+    return this._context.getContentResolver();
   }
 
   /**
    * Gets the application info
    */
-  public get applicationInfo(): JavaObject | null {
-    const aiId = this._context.call("getApplicationInfo", []);
-    return aiId ? JavaObject.fromObjId(aiId) : null;
+  public getApplicationInfo() {
+    return this._context.getApplicationInfo();
   }
 
   /**
    * Gets the assets manager
    */
-  public get assets(): JavaObject | null {
-    const assetsId = this._context.call("getAssets", []);
-    return assetsId ? JavaObject.fromObjId(assetsId) : null;
+  public getAssets() {
+    return this._context.getAssets();
   }
 
   /**
    * Releases the underlying context resources
    */
   public release(): void {
-    this._context.release();
+    (this._context as unknown as JavaObject).release();
   }
 }

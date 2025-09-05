@@ -56,9 +56,7 @@ export class JavaObject {
 
   static {
     if (typeof window["global"] === "undefined") {
-      throw new Error(
-        "JavaObject requires a global context with 'wx:reflect' module."
-      );
+      throw new Error("JavaObject requires a global context with 'wx:reflect' module.");
     }
 
     this.reflect = window.global.require("wx:reflect");
@@ -66,10 +64,7 @@ export class JavaObject {
     this.nextProxyId = 0;
   }
 
-  public constructor(
-    className: string | null,
-    args: Array<string | boolean | number> = []
-  ) {
+  public constructor(className: string | null, args: Array<string | boolean | number> = []) {
     if (typeof className === "undefined") {
       throw new TypeError("Class name must be a non-empty string or null.");
     }
@@ -80,10 +75,7 @@ export class JavaObject {
     }
   }
 
-  public call(
-    method: string,
-    args: Array<string | boolean | number> = []
-  ): string | null | undefined {
+  public call(method: string, args: Array<string | boolean | number> = []): string | null | undefined {
     if (typeof method !== "string" || method.length === 0) {
       throw new TypeError("Method name must be a non-empty string.");
     }
@@ -119,44 +111,26 @@ export class JavaObject {
     return this.reflect?.getClass(name);
   }
 
-  public static newInstance(
-    classId: string,
-    args: Array<string | boolean | number> | null
-  ): string | null | undefined {
+  public static newInstance(classId: string, args: Array<string | boolean | number> | null): string | null | undefined {
     const jsonArgs = args == null ? "null" : JSON.stringify(args);
     return this.reflect?.newInstance(classId, jsonArgs);
   }
 
-  public static callMethod(
-    objId: string,
-    method: string,
-    args: Array<string | boolean | number> | null
-  ): string | null | undefined {
+  public static callMethod(objId: string, method: string, args: Array<string | boolean | number> | null): string | null | undefined {
     const jsonArgs = args == null ? "[]" : JSON.stringify(args);
     return this.reflect?.callMethod(objId, method, jsonArgs);
   }
 
-  public static callStaticMethod(
-    objId: string,
-    method: string,
-    args: Array<string | boolean | number> | null
-  ): string | null | undefined {
+  public static callStaticMethod(objId: string, method: string, args: Array<string | boolean | number> | null): string | null | undefined {
     const jsonArgs = args == null ? "[]" : JSON.stringify(args);
     return this.reflect?.callStaticMethod(objId, method, jsonArgs);
   }
 
-  public static getField(
-    objId: string,
-    field: string
-  ): string | null | undefined {
+  public static getField(objId: string, field: string): string | null | undefined {
     return this.reflect?.getField(objId, field);
   }
 
-  public static setField(
-    objId: string,
-    field: string,
-    value: string | boolean | number | null
-  ): void {
+  public static setField(objId: string, field: string, value: string | boolean | number | null): void {
     this.reflect?.setField(objId, field, String(value));
   }
 
@@ -199,10 +173,7 @@ export class JavaObject {
       }
     }
 
-    const proxyId = this.reflect?.createProxy(
-      interfaceName,
-      JSON.stringify(methodsMap)
-    );
+    const proxyId = this.reflect?.createProxy(interfaceName, JSON.stringify(methodsMap));
 
     const proxy = JavaObject.fromObjId(proxyId);
 
@@ -212,5 +183,70 @@ export class JavaObject {
     };
 
     return proxy;
+  }
+
+  public static create<T>(className: string | JavaObject | null, args: any[] = []): T {
+    let javaObj: JavaObject;
+
+    if (className instanceof JavaObject) {
+      javaObj = className;
+    } else if (className) {
+      javaObj = new JavaObject(className, args);
+    } else {
+      throw new TypeError("Must provide a class name or a JavaObject instance");
+    }
+
+    const autoWrap = (value: any) => {
+      if (value == null) {
+        return value;
+      }
+
+      if (typeof value === "string") {
+        let objId = value;
+
+        if (value.startsWith("ptr:")) {
+          objId = value.slice(4);
+        }
+
+        if (objId.includes("wx_reflect_obj") || objId.match(/^[a-zA-Z0-9_]+$/)) {
+          try {
+            return this.create(JavaObject.fromObjId(objId));
+          } catch (error) {
+            console.error(`Error wrapping Java object ${objId}:`, error);
+            return value;
+          }
+        }
+      }
+
+      return value;
+    };
+
+    return new Proxy(javaObj, {
+      get(target, prop: string, receiver) {
+        if (prop === "release" || prop === "objId" || prop === "classId") {
+          return Reflect.get(target, prop, receiver);
+        }
+
+        return (...args: any[]) => {
+          try {
+            const result = JavaObject.callMethod(target.objId, prop, args);
+            return autoWrap(result);
+          } catch (error) {
+            console.error(`Error calling method ${prop}:`, error);
+            throw error;
+          }
+        };
+      },
+
+      set(target, prop: string, value) {
+        try {
+          JavaObject.setField(target.objId, prop, value);
+          return true;
+        } catch (error) {
+          console.error(`Error setting field ${prop}:`, error);
+          return false;
+        }
+      },
+    }) as T;
   }
 }

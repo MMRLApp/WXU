@@ -16,7 +16,10 @@ export class SharedPreferences {
       throw new TypeError("Context must be an instance of Context class.");
     }
 
-    this.#prefsId = context.native.call("getSharedPreferences", [name, mode]);
+    this.#prefsId = context.getSharedPreferences(name, mode);
+    if (!this.#prefsId) {
+      throw new Error("Failed to get SharedPreferences instance.");
+    }
   }
 
   #getEditor(): any {
@@ -30,43 +33,26 @@ export class SharedPreferences {
     const type = typeof defaultValue;
     switch (type) {
       case "boolean":
-        return (
-          JavaObject.callMethod(this.#prefsId, "getBoolean", [
-            key,
-            defaultValue,
-          ]) == "true"
-        );
+        return JavaObject.callMethod(this.#prefsId, "getBoolean", [key, defaultValue]) == "true";
       case "number":
         if (Number.isInteger(defaultValue)) {
-          const int = JavaObject.callMethod(this.#prefsId, "getInt", [
-            key,
-            defaultValue,
-          ]);
+          const int = JavaObject.callMethod(this.#prefsId, "getInt", [key, defaultValue]);
           const parsedInt = Number.parseInt(int!!);
           if (Number.isNaN(parsedInt)) {
             return defaultValue;
           }
           return parsedInt;
         }
-        const float = JavaObject.callMethod(this.#prefsId, "getFloat", [
-          key,
-          defaultValue,
-        ]);
+        const float = JavaObject.callMethod(this.#prefsId, "getFloat", [key, defaultValue]);
         const parsedFloat = Number.parseFloat(float!!);
         if (Number.isNaN(parsedFloat)) {
           return defaultValue;
         }
         return parsedFloat;
       case "string":
-        return JavaObject.callMethod(this.#prefsId, "getString", [
-          key,
-          defaultValue,
-        ]) as PreferenceValue;
+        return JavaObject.callMethod(this.#prefsId, "getString", [key, defaultValue]) as PreferenceValue;
       default:
-        return JavaObject.callMethod(this.#prefsId, "getString", [
-          key,
-          String(defaultValue),
-        ]) as PreferenceValue;
+        return JavaObject.callMethod(this.#prefsId, "getString", [key, String(defaultValue)]) as PreferenceValue;
     }
   }
 
@@ -78,9 +64,7 @@ export class SharedPreferences {
         JavaObject.callMethod(editor, "putBoolean", [key, value]);
         break;
       case "number":
-        Number.isInteger(value)
-          ? JavaObject.callMethod(editor, "putInt", [key, value])
-          : JavaObject.callMethod(editor, "putFloat", [key, value]);
+        Number.isInteger(value) ? JavaObject.callMethod(editor, "putInt", [key, value]) : JavaObject.callMethod(editor, "putFloat", [key, value]);
         break;
       case "string":
         JavaObject.callMethod(editor, "putString", [key, value]);
@@ -131,8 +115,7 @@ export class SharedPreferences {
     this.#listeners.set(listenerId, callback);
 
     if (!this.#listenerProxy) {
-      const interfaceName =
-        "android.content.SharedPreferences$OnSharedPreferenceChangeListener";
+      const interfaceName = "android.content.SharedPreferences$OnSharedPreferenceChangeListener";
       this.#listenerProxy = JavaObject.createProxy(interfaceName, {
         onSharedPreferenceChanged: (prefsId: any, key: string) => {
           this.#listeners.forEach((listener) => {
@@ -145,27 +128,15 @@ export class SharedPreferences {
         },
       });
 
-      JavaObject.callMethod(
-        this.#prefsId,
-        "registerOnSharedPreferenceChangeListener",
-        [this.#listenerProxy.objId]
-      );
+      JavaObject.callMethod(this.#prefsId, "registerOnSharedPreferenceChangeListener", [this.#listenerProxy.objId]);
     }
 
     return () => this.unregisterOnChangeListener(listenerId);
   }
 
   unregisterOnChangeListener(listenerId: string): boolean {
-    if (
-      this.#listeners.delete(listenerId) &&
-      this.#listeners.size === 0 &&
-      this.#listenerProxy
-    ) {
-      JavaObject.callMethod(
-        this.#prefsId,
-        "unregisterOnSharedPreferenceChangeListener",
-        [this.#listenerProxy.objId]
-      );
+    if (this.#listeners.delete(listenerId) && this.#listeners.size === 0 && this.#listenerProxy) {
+      JavaObject.callMethod(this.#prefsId, "unregisterOnSharedPreferenceChangeListener", [this.#listenerProxy.objId]);
       (this.#listenerProxy as any)?.releaseProxy();
       this.#listenerProxy = null;
       return true;
