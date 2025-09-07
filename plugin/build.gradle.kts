@@ -231,9 +231,11 @@ tasks.register("sign-dex") {
     inputs.file(dexOutput)
     outputs.file(dexOutputSigned)
 
+    dependsOn("build-dex")
+
     doLast {
         if (!hasReleaseKeyStore) {
-            println("❌ No release keystore found. Skipping signing.")
+            println("No release keystore found. Skipping signing.")
             return@doLast
         }
 
@@ -258,7 +260,7 @@ tasks.register("sign-dex") {
 
         Files.write(dexOutputSigned.toPath(), output)
 
-        println("✅ Signed DEX written to: ${dexOutputSigned.absolutePath}")
+        println("Signed DEX written to: ${dexOutputSigned.absolutePath}")
     }
 }
 
