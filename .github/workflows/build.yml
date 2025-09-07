@@ -51,8 +51,8 @@ jobs:
       - name: Build Dex
         run: chmod 755 ./gradlew && ./gradlew --no-daemon build-dex sign-dex
 
-      - name: Upload classes.dex Artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: wxu-plugin-dex
-          path: plugin/build/wxu.dex
+          path: plugin/build/wxu.signed.dex

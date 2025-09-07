@@ -118,6 +118,7 @@ val classesJar =
 val classesOutput = buildDir.resolve("classes.dex")
 val pluginName = "wxu"
 val dexOutput = buildDir.resolve("$pluginName.dex")
+val dexOutputSigned = buildDir.resolve("$pluginName.signed.dex")
 
 val targetModule = "wx_pty_x"
 
@@ -227,11 +228,8 @@ tasks.register("sign-dex") {
     group = "plugin"
     description = "Sign a DEX file with a JKS key"
 
-    val inputDex = project.layout.projectDirectory.file("$pluginName.dex")
-    val outputDex = project.layout.buildDirectory.file("$pluginName.signed.dex")
-
-    inputs.file(inputDex)
-    outputs.file(outputDex)
+    inputs.file(dexOutput)
+    outputs.file(dexOutputSigned)
 
     doLast {
         if (!hasReleaseKeyStore) {
@@ -239,7 +237,7 @@ tasks.register("sign-dex") {
             return@doLast
         }
 
-        val dexBytes = inputDex.asFile.readBytes()
+        val dexBytes = dexOutput.readBytes()
 
         // Load keystore
         val keystore = KeyStore.getInstance("JKS")
@@ -258,9 +256,9 @@ tasks.register("sign-dex") {
         val sigSizeBytes = ByteBuffer.allocate(4).putInt(sigBytes.size).array()
         val output = dexBytes + sigBytes + sigSizeBytes
 
-        Files.write(outputDex.get().asFile.toPath(), output)
+        Files.write(dexOutputSigned.toPath(), output)
 
-        println("✅ Signed DEX written to: ${outputDex.get().asFile.absolutePath}")
+        println("✅ Signed DEX written to: ${dexOutputSigned.absolutePath}")
     }
 }
 
