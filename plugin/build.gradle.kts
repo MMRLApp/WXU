@@ -1,3 +1,10 @@
+import java.nio.ByteBuffer
+import java.nio.file.Files
+import java.security.KeyStore
+import java.security.PrivateKey
+import java.util.Properties
+import java.security.Signature
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.ksp)
@@ -109,7 +116,8 @@ val buildDir: File = project.layout.buildDirectory.get().asFile
 val classesJar =
     buildDir.resolve("intermediates/aar_main_jar/release/syncReleaseLibJars/classes.jar")
 val classesOutput = buildDir.resolve("classes.dex")
-val dexOutput = buildDir.resolve("wxu.dex")
+val pluginName = "wxu"
+val dexOutput = buildDir.resolve("$pluginName.dex")
 
 val targetModule = "wx_pty_x"
 
@@ -203,7 +211,7 @@ tasks.register("build-dex") {
                 adb(
                     "push",
                     dexOutput.absolutePath,
-                    "/data/adb/modules/$targetModule/webroot/plugins/wxu.dex"
+                    "/data/adb/modules/$targetModule/webroot/plugins/$pluginName.dex"
                 )
             }
         }
@@ -213,4 +221,68 @@ tasks.register("build-dex") {
             findLatestNativeLib("libpty.so"),
         )*/
     }
+}
+
+tasks.register("sign-dex") {
+    group = "plugin"
+    description = "Sign a DEX file with a JKS key"
+
+    val inputDex = project.layout.projectDirectory.file("$pluginName.dex")
+    val outputDex = project.layout.buildDirectory.file("$pluginName.signed.dex")
+
+    inputs.file(inputDex)
+    outputs.file(outputDex)
+
+    doLast {
+        if (!hasReleaseKeyStore) {
+            println("❌ No release keystore found. Skipping signing.")
+            return@doLast
+        }
+
+        val dexBytes = inputDex.asFile.readBytes()
+
+        // Load keystore
+        val keystore = KeyStore.getInstance("JKS")
+        keystore.load(releaseKeyStore.inputStream(), releaseKeyStorePassword.toCharArray())
+        val privateKey =
+            keystore.getKey(releaseKeyAlias, releaseKeyPassword.toCharArray()) as PrivateKey
+
+        // Sign dex
+        val signature = Signature.getInstance("SHA256withRSA")
+        signature.initSign(privateKey)
+        signature.update(dexBytes)
+        val sigBytes = signature.sign()
+
+
+        // Append format: [DEX][SIG][SIG_SIZE(4 bytes little-endian)]
+        val sigSizeBytes = ByteBuffer.allocate(4).putInt(sigBytes.size).array()
+        val output = dexBytes + sigBytes + sigSizeBytes
+
+        Files.write(outputDex.get().asFile.toPath(), output)
+
+        println("✅ Signed DEX written to: ${outputDex.get().asFile.absolutePath}")
+    }
+}
+
+private val Project.releaseKeyStore: File get() = File(extra["keyStore"] as String)
+private val Project.releaseKeyStorePassword: String get() = extra["keyStorePassword"] as String
+private val Project.releaseKeyAlias: String get() = extra["keyAlias"] as String
+private val Project.releaseKeyPassword: String get() = extra["keyPassword"] as String
+private val Project.hasReleaseKeyStore: Boolean
+    get() {
+        signingProperties(rootDir).forEach { key, value ->
+            extra[key as String] = value
+        }
+
+        return extra.has("keyStore")
+    }
+
+private fun signingProperties(rootDir: File): Properties {
+    val properties = Properties()
+    val signingProperties = rootDir.resolve("signing.properties")
+    if (signingProperties.isFile) {
+        signingProperties.inputStream().use(properties::load)
+    }
+
+    return properties
 }
