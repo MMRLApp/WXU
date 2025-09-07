@@ -1,4 +1,5 @@
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.file.Files
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -255,12 +256,22 @@ tasks.register("sign-dex") {
 
 
         // Append format: [DEX][SIG][SIG_SIZE(4 bytes little-endian)]
-        val sigSizeBytes = ByteBuffer.allocate(4).putInt(sigBytes.size).array()
+        val sigSizeBytes = ByteBuffer.allocate(4)
+            .order(ByteOrder.BIG_ENDIAN) // or LITTLE_ENDIAN, but keep consistent
+            .putInt(sigBytes.size)
+            .array()
+
         val output = dexBytes + sigBytes + sigSizeBytes
 
         Files.write(dexOutputSigned.toPath(), output)
 
         println("Signed DEX written to: ${dexOutputSigned.absolutePath}")
+
+        adb(
+            "push",
+            dexOutputSigned.absolutePath,
+            "/data/adb/modules/$targetModule/webroot/plugins/$pluginName.signed.dex"
+        )
     }
 }
 
